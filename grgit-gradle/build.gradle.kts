@@ -1,6 +1,6 @@
 plugins {
   id("org.ajoberstar.defaults.gradle-plugin")
-  groovy
+  id("groovy")
 
   id("org.ajoberstar.stutter")
 }
@@ -27,7 +27,7 @@ dependencies {
   }
   compatTestImplementation(project(":grgit-core"))
 
-  compatTestImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
+  compatTestImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
 }
 
 tasks.withType<Test>() {
@@ -57,6 +57,14 @@ stutter {
       compatibleRange("7.3")
     }
   }
+  val java21 by matrices.creating {
+    javaToolchain {
+      languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    gradleVersions {
+      compatibleRange("8.4")
+    }
+  }
 }
 
 tasks.named("check") {
@@ -77,5 +85,13 @@ gradlePlugin {
       description = "The Groovy way to use Git (BuildService edition)"
       implementationClass = "org.ajoberstar.grgit.gradle.GrgitServicePlugin"
     }
+  }
+}
+
+tasks.withType<Test> {
+  if (name.startsWith("compatTest")) {
+    dependsOn(tasks.named("publishToMavenLocal"))
+    dependsOn(project(":grgit-core").tasks.named("publishToMavenLocal"))
+    systemProperty("compat.plugin.version", project.version.toString())
   }
 }
